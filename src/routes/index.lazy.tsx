@@ -1,11 +1,13 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { Typography } from "@mui/material";
+import { useEffect } from "react";
 
 export const Route = createLazyFileRoute("/")({
     component: Index,
 });
 
 function Index() {
+    useSegmentScrolling();
     return (
         <div style={{ textAlign: "center" }}>
             <div>
@@ -139,4 +141,43 @@ function Index() {
             </Typography>
         </div>
     );
+}
+/**
+ * This function allows the user to smoothly scroll a predetermined value when using the mousewheel
+ */
+function useSegmentScrolling() {
+    useEffect(() => {
+        const handleScroll = (event: WheelEvent) => {
+            event.preventDefault();
+
+            const scrollDistance = 50;
+
+            // Smooth scrolling animation
+            const startTime = performance.now();
+            const duration = 500; // Duration of the animation in milliseconds
+
+            const animateScroll = (timestamp: number) => {
+                const elapsed = timestamp - startTime;
+                const progress = elapsed / duration;
+                // TODO : buffer successive inputs (atm user can spam scroll wheel)
+                // Calculate the new scroll position using easing function (here using linear easing)
+                const newPos =
+                    window.scrollY +
+                    (event.deltaY > 0 ? scrollDistance : -scrollDistance) *
+                        progress;
+
+                window.scrollTo(0, newPos);
+
+                if (elapsed < duration) {
+                    window.requestAnimationFrame(animateScroll);
+                }
+            };
+            window.requestAnimationFrame(animateScroll);
+        };
+
+        window.addEventListener("wheel", handleScroll);
+        return () => {
+            window.removeEventListener("wheel", handleScroll);
+        };
+    }, []);
 }
